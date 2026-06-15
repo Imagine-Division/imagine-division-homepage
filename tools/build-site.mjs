@@ -1177,7 +1177,7 @@ function layout({ lang, title, description, current, alternatePath, body, struct
   <header class="site-header" data-site-header>
     <div class="header-inner">
       <a class="brand" href="${pagePath("home", lang)}" aria-label="Imagine Division">
-        <img src="/assets/logo-full.png" alt="Imagine Division" width="2560" height="1440">
+        <img src="/assets/logo-full.png" alt="Imagine Division" width="2560" height="1440" loading="eager" decoding="async">
       </a>
       <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" data-nav-toggle>
         <span></span><span></span><span></span>
@@ -1222,7 +1222,7 @@ function footer(lang) {
   return `<footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <img src="/assets/logo-mark-white.png" alt="" width="2560" height="581">
+        <img src="/assets/logo-mark-white.png" alt="" width="2560" height="581" loading="lazy" decoding="async">
         <div>
           <strong>Imagine Division Limited</strong>
           <p>${escapeHtml(labels.footerIntro)}</p>
@@ -1249,7 +1249,7 @@ function footer(lang) {
 
 function hero({ lang, eyebrow, title, copy, image = "/assets/hero-volume.jpg", primary, secondary, meta = [] }) {
   return `<section class="hero">
-    <img class="hero-media" src="${image}" alt="" width="1600" height="1000" fetchpriority="high">
+    <img class="hero-media" src="${image}" alt="" width="1600" height="1000" loading="eager" decoding="async" fetchpriority="high">
     <div class="hero-scrim"></div>
     <div class="hero-kinetic" aria-hidden="true">
       <span></span><span></span><span></span>
@@ -1288,7 +1288,7 @@ function serviceCards(lang, services = data.services) {
       .map(
         (service) => `<article class="service-card">
           <a href="${servicePath(service, lang)}">
-            <img src="${imageSrc(service.image)}" alt="" width="640" height="460" loading="lazy">
+            <img src="${imageSrc(service.image)}" alt="" width="640" height="460" loading="lazy" decoding="async">
             <span class="card-kicker">${escapeHtml(service.accent)}</span>
             <h3>${escapeHtml(service.title[lang.code])}</h3>
             <p>${escapeHtml(service.body[lang.code])}</p>
@@ -1308,7 +1308,7 @@ function projectCards(lang, projects = data.projects, limit = null) {
       .map(
         (project) => `<article class="project-card" data-category="${escapeHtml(project.category.toLowerCase())}">
           <a href="${projectPath(project, lang)}">
-            <img src="${imageSrc(project.image)}" alt="" width="720" height="500" loading="lazy">
+            <img src="${imageSrc(project.image)}" alt="" width="720" height="500" loading="lazy" decoding="async">
             <div class="project-card-body">
               <p class="card-kicker">${escapeHtml(project.year || "To confirm")}</p>
               <h3>${escapeHtml(project.title)}</h3>
@@ -1332,7 +1332,7 @@ function renderAssetGallery(lang, title, assets, copy = "") {
         ${unique
           .map(
             (asset) => `<figure class="project-gallery-item">
-              <img src="${asset.url}" alt="${escapeHtml(title)}" loading="lazy" width="960" height="640">
+              <img src="${asset.url}" alt="${escapeHtml(title)}" loading="lazy" decoding="async" width="960" height="640">
             </figure>`
           )
           .join("")}
@@ -1491,14 +1491,14 @@ function renderLinks() {
   ];
   const coverPage = data.portfolioPageMap["company-profile-cover"];
   const body = `<section class="hero links-page">
-    <img class="hero-media" src="${coverPage.image}" alt="" width="1600" height="1000" fetchpriority="high">
+    <img class="hero-media" src="${coverPage.image}" alt="" width="1600" height="1000" loading="eager" decoding="async" fetchpriority="high">
     <div class="hero-scrim"></div>
     <div class="hero-kinetic" aria-hidden="true">
       <span></span><span></span><span></span>
     </div>
     <div class="links-shell">
       <div class="links-profile">
-        <img src="/assets/logo-mark-white.png" alt="" width="2560" height="581">
+        <img src="/assets/logo-mark-white.png" alt="" width="2560" height="581" loading="eager" decoding="async">
         <p class="eyebrow">Imagine Division Limited</p>
         <h1>Event and Virtual Production Solutions</h1>
         <p>Company Profile 2025: Event Production, Virtual Production, Web3.0 and AI Engineering, Virtual Artist Management and Production, and CGI/VFX.</p>
@@ -1628,7 +1628,7 @@ function serviceHighlights(lang) {
           <a href="${service ? servicePath(service, lang) : pagePath("projects", lang)}">
             ${
               service
-                ? `<img src="${imageSrc(service.image)}" alt="" width="720" height="520" loading="lazy">`
+                ? `<img src="${imageSrc(service.image)}" alt="" width="720" height="520" loading="lazy" decoding="async">`
                 : ""
             }
             <div class="service-showcase-copy">
@@ -1903,8 +1903,8 @@ function renderProjectPage(project, lang) {
   const metadata = Object.entries(project.metadata).filter(([key]) => key !== "Slug");
   const creditImages = ["music-video-stellarstellar", "ghost-music-video", "angela-pang-mv"].includes(project.slug)
     ? `<div class="credit-images">
-        <img src="/assets/credit-2.jpg" alt="Project credit graphic" loading="lazy" width="640" height="420">
-        <img src="/assets/credit-3.jpg" alt="Project credit graphic" loading="lazy" width="640" height="420">
+        <img src="/assets/credit-2.jpg" alt="Project credit graphic" loading="lazy" decoding="async" width="640" height="420">
+        <img src="/assets/credit-3.jpg" alt="Project credit graphic" loading="lazy" decoding="async" width="640" height="420">
       </div>`
     : "";
   const body = `${hero({
@@ -2050,7 +2050,7 @@ function writeStaticAssets() {
   for (const asset of unique.values()) copyAsset(asset);
   for (const asset of data.portfolioAssets) copyPortfolioAsset(asset);
   writeFileSync(join(root, "site.css"), siteCss);
-  writeFileSync(join(root, "site.js"), siteJs);
+  writeFileSync(join(root, "site.js"), readFileSync(join(root, "tools", "site-runtime.js"), "utf8"));
 }
 
 function writePages() {

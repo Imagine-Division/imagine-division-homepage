@@ -237,6 +237,15 @@ async function verifyViewport(client, siteUrl, viewport, outputName) {
       hasSourceWording: /Portfolio Images|作品集圖片|Page render|embedded image|Not specified in archive|Extracted portfolio page text/.test(bodyText),
       logoLoaded: document.querySelector(".brand img")?.naturalWidth > 0,
       imageCount: [...document.images].filter((image) => image.naturalWidth > 0).length,
+      nonCriticalImages: [...document.images].filter((image) => {
+        return !image.classList.contains("hero-media") && !image.closest(".brand") && !image.closest(".links-profile");
+      }).length,
+      nonCriticalNotLazy: [...document.images]
+        .filter((image) => {
+          return !image.classList.contains("hero-media") && !image.closest(".brand") && !image.closest(".links-profile");
+        })
+        .filter((image) => image.loading !== "lazy")
+        .map((image) => image.getAttribute("src")),
       stylesheetLoaded: [...document.styleSheets].some((sheet) => sheet.href && sheet.href.includes("site.css")),
       heroDisplay: getComputedStyle(document.querySelector(".hero")).display,
       heroMetaCount: document.querySelectorAll(".hero-meta").length,
@@ -260,6 +269,72 @@ async function verifyViewport(client, siteUrl, viewport, outputName) {
     fromSurface: true,
   });
   writeFileSync(join(verificationDir, outputName), Buffer.from(screenshot.data, "base64"));
+  return evaluation.result.value;
+}
+
+async function verifySpaNavigation(client, siteUrl) {
+  await client.send("Page.enable");
+  await client.send("Runtime.enable");
+  const loaded = client.waitFor("Page.loadEventFired");
+  await client.send("Page.navigate", { url: siteUrl });
+  await loaded;
+  await new Promise((resolveWait) => setTimeout(resolveWait, 500));
+
+  const evaluation = await client.send("Runtime.evaluate", {
+    expression: `new Promise((resolve) => {
+      const navigationEntriesBefore = performance.getEntriesByType("navigation").length;
+      const link = [...document.querySelectorAll("a[href]")].find((anchor) => {
+        try {
+          return ["/en/about/", "/en/about/index.html"].includes(new URL(anchor.href).pathname);
+        } catch {
+          return false;
+        }
+      });
+      if (!link) {
+        resolve({ missingLink: true });
+        return;
+      }
+      const timeout = setTimeout(() => {
+        resolve({
+          timeout: true,
+          path: location.pathname,
+          navigationCount: window.ImagineDivisionSPA?.navigationCount || 0,
+          navigationEntriesBefore,
+          navigationEntriesAfter: performance.getEntriesByType("navigation").length,
+        });
+      }, 4000);
+      window.addEventListener(
+        "imagine:routechange",
+        () => {
+          clearTimeout(timeout);
+          requestAnimationFrame(() => {
+            resolve({
+              path: location.pathname,
+              title: document.title,
+              h1: document.querySelector("h1")?.textContent.trim(),
+              bodyPage: document.body.dataset.page,
+              navigationCount: window.ImagineDivisionSPA?.navigationCount || 0,
+              navigationEntriesBefore,
+              navigationEntriesAfter: performance.getEntriesByType("navigation").length,
+              routeRequests: performance
+                .getEntriesByType("resource")
+                .filter((entry) => entry.name.includes("/en/about/")).length,
+              nonCriticalNotLazy: [...document.images]
+                .filter((image) => {
+                  return !image.classList.contains("hero-media") && !image.closest(".brand") && !image.closest(".links-profile");
+                })
+                .filter((image) => image.loading !== "lazy")
+                .map((image) => image.getAttribute("src")),
+            });
+          });
+        },
+        { once: true }
+      );
+      link.click();
+    })`,
+    returnByValue: true,
+    awaitPromise: true,
+  });
   return evaluation.result.value;
 }
 
@@ -324,6 +399,7 @@ async function main() {
     const mobileService = await verifyViewport(client, `${baseUrl}/zh-hk/services/virtual-production/`, { width: 390, height: 1000, mobile: true }, "mobile-service.png");
     const mobileProject = await verifyViewport(client, `${baseUrl}/zh-hk/projects/third-belt-road-youth-development-summit/`, { width: 390, height: 1000, mobile: true }, "mobile-project.png");
     const directFileIndex = await verifyViewport(client, pathToFileURL(join(root, "index.html")).href, { width: 1440, height: 1100, mobile: false }, "file-index.png");
+    const spaNavigation = await verifySpaNavigation(client, `${baseUrl}/en/`);
     await captureSection(client, `${baseUrl}/en/`, { width: 1440, height: 1100, mobile: false }, ".service-showcase-grid", "desktop-home-services.png");
     await captureSection(client, `${baseUrl}/zh-hk/projects/third-belt-road-youth-development-summit/`, { width: 390, height: 1000, mobile: true }, ".project-gallery", "mobile-project-gallery.png");
     client.close();
@@ -338,6 +414,7 @@ async function main() {
         check.hasSourceWording ||
         !check.logoLoaded ||
         check.imageCount < 1 ||
+        check.nonCriticalNotLazy.length ||
         !check.stylesheetLoaded ||
         check.heroDisplay !== "grid"
     );
@@ -367,6 +444,17 @@ async function main() {
     if (!mobileProject.projectGalleryItems || !mobileProject.loadedGalleryImages) {
       throw new Error(`Project gallery verification failed: ${JSON.stringify(mobileProject, null, 2)}`);
     }
+    if (
+      spaNavigation.timeout ||
+      spaNavigation.missingLink ||
+      spaNavigation.path !== "/en/about/" ||
+      spaNavigation.bodyPage !== "about" ||
+      !spaNavigation.navigationCount ||
+      spaNavigation.navigationEntriesAfter !== spaNavigation.navigationEntriesBefore ||
+      spaNavigation.nonCriticalNotLazy?.length
+    ) {
+      throw new Error(`SPA navigation verification failed: ${JSON.stringify(spaNavigation, null, 2)}`);
+    }
 
     console.log(
       JSON.stringify(
@@ -381,6 +469,7 @@ async function main() {
           mobileService,
           mobileProject,
           directFileIndex,
+          spaNavigation,
           screenshots: [
             "verification/desktop-home.png",
             "verification/mobile-home.png",
