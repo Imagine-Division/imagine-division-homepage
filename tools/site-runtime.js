@@ -112,15 +112,18 @@
 
   const syncHead = (doc) => {
     document.title = doc.title;
-    const nextDescription = doc.querySelector('meta[name="description"]')?.getAttribute("content") || "";
-    let description = document.querySelector('meta[name="description"]');
-    if (!description) {
-      description = document.createElement("meta");
-      description.name = "description";
-      document.head.append(description);
-    }
-    description.setAttribute("content", nextDescription);
     document.documentElement.lang = doc.documentElement.lang || document.documentElement.lang;
+
+    const syncSelector = (selector) => {
+      document.head.querySelectorAll(selector).forEach((element) => element.remove());
+      doc.head.querySelectorAll(selector).forEach((element) => document.head.append(element.cloneNode(true)));
+    };
+
+    syncSelector('meta[name="description"]');
+    syncSelector('meta[property^="og:"]');
+    syncSelector('meta[name^="twitter:"]');
+    syncSelector('link[rel="canonical"]', "href");
+    syncSelector('link[rel="alternate"]', "href");
   };
 
   const replaceRegion = (selector, doc) => {
@@ -243,6 +246,16 @@
       nav.dataset.open = String(!expanded);
     });
 
+    if (root.dataset.navEscapeReady !== "true") {
+      root.dataset.navEscapeReady = "true";
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
+        const currentNav = document.querySelector("[data-primary-nav]");
+        if (currentNav) currentNav.dataset.open = "false";
+      });
+    }
+
     for (const link of nav.querySelectorAll("a")) {
       link.addEventListener("click", () => {
         navToggle.setAttribute("aria-expanded", "false");
@@ -343,13 +356,56 @@
     }
   };
 
+  const initializeHeroMotion = () => {
+    if (prefersReducedMotion.matches) return;
+    for (const hero of document.querySelectorAll("[data-hero-motion]")) {
+      if (hero.dataset.motionReady === "true") continue;
+      hero.dataset.motionReady = "true";
+      let ticking = false;
+      let nextX = 0;
+      let nextY = 0;
+
+      const applyDrift = () => {
+        hero.style.setProperty("--hero-drift-x", nextX.toFixed(2) + "px");
+        hero.style.setProperty("--hero-drift-y", nextY.toFixed(2) + "px");
+        ticking = false;
+      };
+
+      hero.addEventListener(
+        "pointermove",
+        (event) => {
+          const rect = hero.getBoundingClientRect();
+          nextX = ((event.clientX - rect.left) / rect.width - 0.5) * 18;
+          nextY = ((event.clientY - rect.top) / rect.height - 0.5) * 14;
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(applyDrift);
+        },
+        { passive: true }
+      );
+
+      hero.addEventListener("pointerleave", () => {
+        nextX = 0;
+        nextY = 0;
+        if (!ticking) {
+          ticking = true;
+          window.requestAnimationFrame(applyDrift);
+        }
+      });
+    }
+  };
+
   const initializeProjectFilters = () => {
     const filterButtons = [...document.querySelectorAll("[data-project-filter]")];
     const cards = [...document.querySelectorAll(".project-card")];
     for (const button of filterButtons) {
       button.addEventListener("click", () => {
         const filter = button.dataset.projectFilter;
-        for (const other of filterButtons) other.classList.toggle("is-active", other === button);
+        for (const other of filterButtons) {
+          const active = other === button;
+          other.classList.toggle("is-active", active);
+          other.setAttribute("aria-pressed", String(active));
+        }
         for (const card of cards) {
           const visible = filter === "all" || card.dataset.category.includes(filter);
           card.hidden = !visible;
@@ -594,6 +650,7 @@
     initializeNav();
     initializeReveal();
     initializeSectionLinks();
+    initializeHeroMotion();
     initializeTilt();
     initializeProjectFilters();
     initializeGsViewer();

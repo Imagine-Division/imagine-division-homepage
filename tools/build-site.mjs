@@ -9,6 +9,7 @@ const portfolioRoot = join(root, "portfolio-source", "imagine-division");
 const portfolioPagesRoot = join(portfolioRoot, "pages");
 const portfolioAssetsRoot = join(root, "portfolio-assets");
 const markdown = readFileSync(contentPath, "utf8");
+const siteOrigin = "https://www.imaginedivision.com";
 
 const languages = [
   {
@@ -56,6 +57,18 @@ const i18n = {
     projectDetails: "Project Details",
     enquiryPrompts: "Enquiry Prompts",
     contactChannels: "Contact Channels",
+    openMenu: "Open menu",
+    whatWeHandle: "What We Handle",
+    bestFor: "Best For",
+    deliverables: "Typical Deliverables",
+    proofPoints: "Production Proof",
+    approach: "Approach",
+    role: "Our Role",
+    technicalApproach: "Technical Approach",
+    deliveryFocus: "Delivery Focus",
+    startWithEmail: "Start With Email",
+    responseGuidance:
+      "For a faster reply, include the project type, target date, venue or platform, and any reference materials.",
     all: "All",
     year: "Area",
     category: "Category",
@@ -67,7 +80,7 @@ const i18n = {
     serviceFocus: "Service Focus",
     footerIntro:
       "Event and virtual production solutions: Event Production, Virtual Production, Web3.0 and AI Engineering, Virtual Artist Management and Production, and CGI/VFX.",
-    copyright: "Copyright © 2022 Imagine Division Limited. All rights reserved.",
+    copyright: "Copyright © 2026 Imagine Division Limited. All rights reserved.",
   },
   "zh-hk": {
     home: "首頁",
@@ -91,6 +104,18 @@ const i18n = {
     projectDetails: "項目資料",
     enquiryPrompts: "查詢提示",
     contactChannels: "聯絡渠道",
+    openMenu: "開啟選單",
+    whatWeHandle: "我們處理的範圍",
+    bestFor: "適合項目",
+    deliverables: "典型交付",
+    proofPoints: "製作證明",
+    approach: "方法",
+    role: "我們的角色",
+    technicalApproach: "技術方法",
+    deliveryFocus: "交付重點",
+    startWithEmail: "以電郵開始",
+    responseGuidance:
+      "如希望我們更快回覆，請提供項目類型、目標日期、場地或平台，以及任何參考資料。",
     all: "全部",
     year: "範疇",
     category: "類別",
@@ -102,7 +127,7 @@ const i18n = {
     serviceFocus: "服務重點",
     footerIntro:
       "活動及虛擬製作解決方案：活動製作、虛擬製作、Web3.0及AI工程、虛擬藝人運營及製作、數碼合成與視覺特效。",
-    copyright: "Copyright © 2022 Imagine Division Limited. All rights reserved.",
+    copyright: "Copyright © 2026 Imagine Division Limited. All rights reserved.",
   },
 };
 
@@ -779,6 +804,55 @@ function extractMeta(block, lang) {
   return { title: stripTrailing(title), description: stripTrailing(description) };
 }
 
+const caseSlugAliases = {
+  "third-belt-road-youth-development-summit": "the-3rd-belt-and-road-youth-development-summit-forum",
+  "top-nova-2023": "top-nova-music-festival-2023",
+  "hololive-party2gather": "hololive-en-party2gather",
+  "lnaf-2023": "luminous-nexus-anime-fiesta-2023",
+  "mic-on-project-1st-live": "mop-1st-live-concert",
+  "ghost-hoshimachi-suisei-cosplay-music-video": "ghost-music-video",
+  "angela-pang-official-music-video": "angela-pang-mv",
+};
+
+function localizedCaseBlock(sectionBody, heading) {
+  const block = tryExtractSection(sectionBody, 4, heading);
+  return Object.fromEntries(
+    languages.map((lang) => [lang.code, extractLanguageBlock(block, lang.marker)])
+  );
+}
+
+function extractProjectCaseStudies(source) {
+  const caseStudiesBlock = tryExtractSection(source, 2, "Project Case Studies");
+  if (!caseStudiesBlock) return new Map();
+  const studies = new Map();
+  for (const section of splitSubsections(caseStudiesBlock, 3)) {
+    const slug = section.body.match(/^Slug:\s*`([^`]+)`/m)?.[1];
+    if (!slug) continue;
+    const beforeDetails = section.body.split(/\n####\s+/)[0] || "";
+    const metadata = {};
+    for (const match of beforeDetails.matchAll(/^([^:\n]+):\s*(.+)$/gm)) {
+      const key = stripTrailing(match[1]);
+      const value = stripTrailing(match[2]);
+      if (key === "Slug" || !value) continue;
+      metadata[key] = value.replace(/^`|`$/g, "");
+    }
+    studies.set(slug, {
+      title: section.title,
+      slug,
+      metadata,
+      summary: localizedCaseBlock(section.body, "Summary"),
+      context: localizedCaseBlock(section.body, "Context"),
+      scope: localizedCaseBlock(section.body, "Production Scope"),
+      angle: localizedCaseBlock(section.body, "Showcase Angle"),
+    });
+  }
+  return studies;
+}
+
+function projectCaseFor(project, caseStudies) {
+  return caseStudies.get(project.slug) || caseStudies.get(caseSlugAliases[project.slug]);
+}
+
 function extractPairedBullets(source, label) {
   const block = extractLabelBlock(source, label);
   if (!block) return [];
@@ -924,6 +998,7 @@ function copyPortfolioAsset(asset) {
 }
 
 function readData() {
+  const caseStudies = extractProjectCaseStudies(markdown);
   const portfolioPages = Object.fromEntries(
     portfolioPageDefinitions.map((definition) => {
       const page = readPortfolioPage(definition);
@@ -955,31 +1030,50 @@ function readData() {
 
   const projects = projectDefinitions.map((project) => {
     const page = pageFor(project.pageSlug);
+    const caseStudy = projectCaseFor(project, caseStudies);
+    const metadata = {
+      "Service Area": page.section,
+      Category: project.category,
+      ...(caseStudy?.metadata || {}),
+    };
     return {
       ...project,
       image: page.image,
       gallery: uniqueAssets(page.visualAssets),
-      year: page.section,
-      venue: "",
-      metadata: {
-        "Service Area": page.section,
-        Category: project.category,
-      },
+      year: metadata.Year || page.section,
+      venue: metadata["Venue / Location"] || metadata.Venue || "",
+      metadata,
       summary: {
-        en: `${project.title} is a selected ${page.section} project by Imagine Division.`,
-        "zh-hk": `${project.title} 是 Imagine Division「${page.section}」範疇中的專案實例。`,
+        en:
+          caseStudy?.summary.en ||
+          `${project.title} is shown here as a ${page.section} reference, with production imagery that helps clients understand the scale, format, and visual direction of the work.`,
+        "zh-hk":
+          caseStudy?.summary["zh-hk"] ||
+          `${project.title} 是 Imagine Division「${page.section}」範疇中的專案實例。`,
       },
       context: {
-        en: `${project.title} sits within Imagine Division's ${page.section} work, demonstrating how the team adapts production resources to different clients, venues, and creative formats.`,
-        "zh-hk": `${project.title} 屬於 Imagine Division 的「${page.section}」工作範疇，展示團隊如何因應不同客戶、場地及創作形式調配製作資源。`,
+        en:
+          caseStudy?.context.en ||
+          `The project belongs to Imagine Division's ${page.section} work and is useful for evaluating the team's ability to adapt planning, visuals, and technical resources around a specific creative format.`,
+        "zh-hk":
+          caseStudy?.context["zh-hk"] ||
+          `${project.title} 屬於 Imagine Division 的「${page.section}」工作範疇，展示團隊如何因應不同客戶、場地及創作形式調配製作資源。`,
       },
       scope: {
-        en: "Production support includes the planning, creative, technical, and onsite execution needed to bring the project into a presentable public-facing result.",
-        "zh-hk": "製作支援涵蓋策劃、創意、技術及現場執行，讓項目能以完整而適合公開展示的形式呈現。",
+        en:
+          caseStudy?.scope.en ||
+          "- Production planning and format definition\n- Visual and technical preparation\n- Asset, stage, or screen-content coordination\n- Delivery support for a public-facing result",
+        "zh-hk":
+          caseStudy?.scope["zh-hk"] ||
+          "製作支援涵蓋策劃、創意、技術及現場執行，讓項目能以完整而適合公開展示的形式呈現。",
       },
       angle: {
-        en: `This project highlights Imagine Division's capability in ${page.section}.`,
-        "zh-hk": `此項目展示 Imagine Division 在「${page.section}」上的製作能力。`,
+        en:
+          caseStudy?.angle.en ||
+          `This reference is best used to discuss similar ${page.section} requirements, especially when a project needs both creative direction and practical production execution.`,
+        "zh-hk":
+          caseStudy?.angle["zh-hk"] ||
+          `此項目展示 Imagine Division 在「${page.section}」上的製作能力。`,
       },
     };
   });
@@ -1008,7 +1102,7 @@ Imagine Division Limited was established in November 2020. The company works acr
 ZH_HK title: Imagine Division | 活動及虛擬製作解決方案
 EN title: Imagine Division | Event and Virtual Production Solutions
 ZH_HK description: Imagine Division Limited 2025 企業簡介內容，涵蓋活動製作、虛擬製作、Web3.0及AI工程、虛擬藝人運營及製作、數碼合成與視覺特效。
-EN description: Imagine Division Limited 2025 company profile content covering event production, virtual production, Web3.0 and AI engineering, virtual artist management and production, and CGI/VFX.
+EN description: Hong Kong production partner for event production, virtual production, AI/Web3 systems, virtual artist production, CGI, and VFX.
 
 ### Hero
 
@@ -1018,9 +1112,9 @@ ZH_HK:
 企業簡介 2025：活動製作、虛擬藝人運營及製作、虛擬製作、Web3.0及AI工程、數碼合成&視覺特效。
 
 EN:
-Event and Virtual Production Solutions
+Live, virtual, and AI-powered production for ambitious projects.
 
-Company Profile 2025: Event Production, Virtual Artist Management and Production, Virtual Production, Web3.0 and AI Engineering, and CGI and VFX.
+Imagine Division helps teams plan, produce, and deliver events, virtual production, virtual artist programmes, AI/Web3 applications, CGI, and VFX with one connected creative and technical workflow.
 
 ### Intro
 
@@ -1028,7 +1122,7 @@ ZH_HK:
 成立於2020年11月，Imagine Division 主要業務涵蓋活動策劃、舞台設計及製作、三維動畫、元宇宙及AI工程等，並於近年積極拓展人工智能應用，配合 Web 3.0、虛擬資產等科技市場方向更新製作內容。
 
 EN:
-Established in November 2020, Imagine Division works across event planning, stage design and production, 3D animation, metaverse and AI engineering. The company has also expanded into AI applications alongside Web 3.0 and virtual asset markets.
+Established in November 2020, Imagine Division works across event planning, stage design, realtime production, 3D animation, metaverse applications, and AI engineering. The team connects creative direction with practical production execution for education institutions, private companies, public-facing events, and personal brands.
 
 ### Recent Projects Section
 
@@ -1036,7 +1130,7 @@ ZH_HK:
 以下專案實例來自 Imagine Division 2025 作品集，按原章節整理為活動製作、虛擬製作、Web3.0及AI工程等類別，並保留每頁所有可用圖片。
 
 EN:
-The selected projects below show Imagine Division's work across event production, virtual production, Web3.0 and AI engineering, and virtual artist programmes.`;
+The selected projects below show how Imagine Division applies planning, onsite execution, realtime systems, virtual production, and AI/Web3 engineering across different production formats.`;
 
   const about = `### Meta
 
@@ -1152,8 +1246,26 @@ function metaFor(block, lang, fallbackTitle) {
   };
 }
 
-function layout({ lang, title, description, current, alternatePath, body, structuredData = "" }) {
+function absoluteSiteUrl(pathname = "/") {
+  return new URL(pathname.startsWith("/") ? pathname : `/${pathname}`, siteOrigin).href;
+}
+
+function layout({
+  lang,
+  title,
+  description,
+  current,
+  alternatePath,
+  canonicalPath = lang.homePath,
+  image = "/assets/logo-mark-white.png",
+  body,
+  structuredData = "",
+}) {
   const labels = i18n[lang.code];
+  const otherLang = languages.find((item) => item.dir === lang.otherDir);
+  const canonicalUrl = absoluteSiteUrl(canonicalPath);
+  const alternateUrl = absoluteSiteUrl(alternatePath);
+  const imageUrl = absoluteSiteUrl(imageSrc(image));
   const nav = [
     { key: "home", href: pagePath("home", lang), label: labels.home },
     { key: "projects", href: pagePath("projects", lang), label: labels.projects },
@@ -1167,6 +1279,20 @@ function layout({ lang, title, description, current, alternatePath, body, struct
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}">
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
+  <link rel="alternate" hreflang="${escapeHtml(lang.htmlLang)}" href="${escapeHtml(canonicalUrl)}">
+  <link rel="alternate" hreflang="${escapeHtml(otherLang?.htmlLang || "x-default")}" href="${escapeHtml(alternateUrl)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(absoluteSiteUrl(pagePath("home", languages[0])))}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Imagine Division">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+  <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
   <link rel="icon" href="/assets/favicon.ico">
   <link rel="stylesheet" href="/site.css">
   <script src="/site.js" defer></script>
@@ -1181,7 +1307,7 @@ function layout({ lang, title, description, current, alternatePath, body, struct
       </a>
       <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" data-nav-toggle>
         <span></span><span></span><span></span>
-        <span class="sr-only">${labels.services}</span>
+        <span class="sr-only">${escapeHtml(labels.openMenu || "Open menu")}</span>
       </button>
       <nav class="primary-nav" id="primaryNav" aria-label="Primary navigation" data-primary-nav>
         ${nav
@@ -1247,14 +1373,29 @@ function footer(lang) {
   </footer>`;
 }
 
-function hero({ lang, eyebrow, title, copy, image = "/assets/hero-volume.jpg", primary, secondary, meta = [] }) {
-  return `<section class="hero">
+function heroMotionLayers() {
+  return `<div class="hero-signal" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hero-orbit" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>`;
+}
+
+function hero({ lang, eyebrow, title, copy, image = "/assets/hero-volume.jpg", primary, secondary, meta = [], logo = false }) {
+  return `<section class="hero" data-hero-motion>
     <img class="hero-media" src="${image}" alt="" width="1600" height="1000" loading="eager" decoding="async" fetchpriority="high">
     <div class="hero-scrim"></div>
     <div class="hero-kinetic" aria-hidden="true">
       <span></span><span></span><span></span>
     </div>
+    ${heroMotionLayers()}
     <div class="hero-content">
+      ${
+        logo
+          ? `<img class="hero-logo" src="/assets/logo-mark-white.png" alt="Imagine Division" width="2560" height="581" loading="eager" decoding="async">`
+          : ""
+      }
       <p class="eyebrow">${escapeHtml(eyebrow)}</p>
       <h1>${escapeHtml(title)}</h1>
       ${renderMarkdownLite(copy)}
@@ -1399,6 +1540,45 @@ function processRail() {
   </div>`;
 }
 
+function proofStrip(lang) {
+  const isZh = lang.code === "zh-hk";
+  const items = [
+    {
+      value: "2020",
+      label: isZh ? "成立年份" : "Founded",
+      copy: isZh ? "香港製作團隊" : "Hong Kong production team",
+    },
+    {
+      value: `${data.services.length}`,
+      label: isZh ? "服務範疇" : "Service areas",
+      copy: isZh ? "活動、虛擬製作、AI/Web3、虛擬藝人、CGI/VFX" : "Live, virtual, AI/Web3, artist, and CGI/VFX workflows",
+    },
+    {
+      value: `${data.projects.length}`,
+      label: isZh ? "精選案例" : "Selected cases",
+      copy: isZh ? "以作品圖像及案例頁展示製作能力" : "Portfolio references with project imagery and case pages",
+    },
+    {
+      value: "XR",
+      label: isZh ? "技術方向" : "Production stack",
+      copy: isZh ? "Realtime、XR、LED Volume、AI 工程" : "Realtime, XR, LED Volume, and AI engineering",
+    },
+  ];
+  return `<section class="proof-strip" aria-label="${escapeHtml(isZh ? "製作證明" : "Production proof")}">
+    <div class="proof-strip-inner">
+      ${items
+        .map(
+          (item) => `<article>
+            <strong>${escapeHtml(item.value)}</strong>
+            <span>${escapeHtml(item.label)}</span>
+            <p>${escapeHtml(item.copy)}</p>
+          </article>`
+        )
+        .join("")}
+    </div>
+  </section>`;
+}
+
 function contactCta(lang) {
   const labels = i18n[lang.code];
   return `<section class="band contact-cta-band" id="contact" data-section="contact">
@@ -1490,12 +1670,13 @@ function renderLinks() {
     { label: "Audio Chamber", href: "https://www.instagram.com/theaudiochamber.id/" },
   ];
   const coverPage = data.portfolioPageMap["company-profile-cover"];
-  const body = `<section class="hero links-page">
+  const body = `<section class="hero links-page" data-hero-motion>
     <img class="hero-media" src="${coverPage.image}" alt="" width="1600" height="1000" loading="eager" decoding="async" fetchpriority="high">
     <div class="hero-scrim"></div>
     <div class="hero-kinetic" aria-hidden="true">
       <span></span><span></span><span></span>
     </div>
+    ${heroMotionLayers()}
     <div class="links-shell">
       <div class="links-profile">
         <img src="/assets/logo-mark-white.png" alt="" width="2560" height="581" loading="eager" decoding="async">
@@ -1538,6 +1719,8 @@ function renderLinks() {
       "Quick links for Imagine Division: official website, contact email, projects, services, and social channels.",
     current: "links",
     alternatePath: "/zh-hk/",
+    canonicalPath: "/links/",
+    image: "/assets/logo-mark-white.png",
     body,
   });
 }
@@ -1563,7 +1746,9 @@ function renderHome(lang) {
     image: coverPage.image,
     primary: { href: pagePath("projects", lang), label: labels.viewProjects },
     secondary: { href: pagePath("contact", lang), label: labels.contactUs },
+    logo: true,
   })}
+  ${proofStrip(lang)}
   ${homeSectionNav(lang)}
   <section class="band band-light process-band" id="workflow" data-section="workflow">
     <div class="container split-intro">
@@ -1602,6 +1787,8 @@ function renderHome(lang) {
     description: homeMeta.description,
     current: "home",
     alternatePath: pagePath("home", languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: pagePath("home", lang),
+    image: coverPage.image,
     body,
   });
 }
@@ -1690,6 +1877,8 @@ function renderAbout(lang) {
     description: meta.description,
     current: "about",
     alternatePath: pagePath("about", languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: pagePath("about", lang),
+    image: aboutPage.image,
     body,
   });
 }
@@ -1726,8 +1915,60 @@ function renderServicesIndex(lang) {
     description,
     current: "services",
     alternatePath: `/${lang.otherDir}/services/`,
+    canonicalPath: `/${lang.dir}/services/`,
+    image: servicesPage.image,
     body,
   });
+}
+
+function serviceUseCases(service, lang) {
+  const isZh = lang.code === "zh-hk";
+  const useCases = {
+    "event-production": {
+      en: ["Corporate forums and public events", "Anime, music, and fan-culture events", "Stage, venue, and audience-flow driven productions"],
+      "zh-hk": ["企業論壇及公開活動", "動漫、音樂及粉絲文化活動", "需要舞台、場地及觀眾動線規劃的製作"],
+    },
+    "virtual-production": {
+      en: ["Music videos and commercial screen content", "LED Volume and mixed-reality shooting", "Education, training, and immersive media projects"],
+      "zh-hk": ["音樂錄像及商業影像內容", "LED Volume 及混合實景拍攝", "教育、培訓及沉浸式媒體項目"],
+    },
+    "web3-ai-engineering": {
+      en: ["Private AI workflow prototypes", "AI-generated content and data workflows", "Interactive or platform-based technical builds"],
+      "zh-hk": ["私有 AI 工作流原型", "AI 生成內容及數據流程", "互動或平台式技術建置"],
+    },
+    "virtual-artist-management-and-production": {
+      en: ["Virtual artist IP and performance planning", "VTuber live, event, and content production", "Technical support for virtual performer programmes"],
+      "zh-hk": ["虛擬藝人 IP 及演出規劃", "VTuber 直播、活動及內容製作", "虛擬演出節目的技術支援"],
+    },
+    "cgi-vfx": {
+      en: ["CGI scenes and digital compositing", "VFX support for screen and event content", "Visual assets for advertising, games, architecture, and immersive media"],
+      "zh-hk": ["CGI 場景及數碼合成", "影像及活動內容的 VFX 支援", "廣告、遊戲、建築及沉浸式媒體視覺資產"],
+    },
+  };
+  return useCases[service.slug]?.[lang.code] || useCases[service.slug]?.en || [];
+}
+
+function serviceDeliverables(service, lang) {
+  const deliverables = {
+    en: ["Production plan and creative direction", "Technical workflow and resource coordination", "Onsite or delivery support", "Post-project media or documentation handoff"],
+    "zh-hk": ["製作計劃及創意方向", "技術流程及資源協調", "現場或交付支援", "項目後媒體或文件交付"],
+  };
+  return deliverables[lang.code] || deliverables.en;
+}
+
+function insightList(title, items) {
+  return `<article class="insight-card">
+    <h3>${escapeHtml(title)}</h3>
+    <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+  </article>`;
+}
+
+function enquiryMailto(label) {
+  const subject = encodeURIComponent(`Production enquiry: ${label}`);
+  const body = encodeURIComponent(
+    "Project type:\nTarget date:\nVenue / platform:\nReference links:\nWhat you need Imagine Division to handle:\n"
+  );
+  return `mailto:info@imaginedivision.com?subject=${subject}&body=${body}`;
 }
 
 function renderServicePage(service, lang) {
@@ -1758,6 +1999,10 @@ function renderServicePage(service, lang) {
                 .join("")}</ul>`
             : renderMarkdownLite(service.body[lang.code])
         }
+        <div class="insight-grid">
+          ${insightList(labels.bestFor || "Best For", serviceUseCases(service, lang))}
+          ${insightList(labels.deliverables || "Typical Deliverables", serviceDeliverables(service, lang))}
+        </div>
       </div>
       <aside class="detail-aside">
         <p class="card-kicker">${escapeHtml(labels.featuredCases)}</p>
@@ -1779,6 +2024,8 @@ function renderServicePage(service, lang) {
     description,
     current: "services",
     alternatePath: servicePath(service, languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: servicePath(service, lang),
+    image: service.image,
     body,
   });
 }
@@ -1849,14 +2096,14 @@ function renderProjects(lang) {
   <section class="band band-light">
     <div class="container">
       <div class="filter-bar" aria-label="${escapeHtml(labels.projectIndex)}">
-        <button type="button" class="filter-button is-active" data-project-filter="all">${escapeHtml(labels.all)}</button>
+        <button type="button" class="filter-button is-active" data-project-filter="all" aria-pressed="true">${escapeHtml(labels.all)}</button>
         ${categories
           .slice(0, 8)
           .map(
             (category) =>
               `<button type="button" class="filter-button" data-project-filter="${escapeHtml(
                 category.toLowerCase()
-              )}">${escapeHtml(category)}</button>`
+              )}" aria-pressed="false">${escapeHtml(category)}</button>`
           )
           .join("")}
       </div>
@@ -1892,6 +2139,8 @@ function renderProjects(lang) {
     description: meta.description,
     current: "projects",
     alternatePath: pagePath("projects", languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: pagePath("projects", lang),
+    image: heroProject.image,
     body,
   });
 }
@@ -1957,6 +2206,8 @@ function renderProjectPage(project, lang) {
     description,
     current: "projects",
     alternatePath: projectPath(project, languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: projectPath(project, lang),
+    image: project.image,
     body,
   });
 }
@@ -1981,10 +2232,24 @@ function renderContact(lang) {
       <section>
         ${sectionIntro(labels.enquiryPrompts, labels.enquiryPrompts)}
         ${renderMarkdownLite(prompts)}
+        <div class="insight-grid contact-enquiry-grid">
+          ${data.services
+            .map((service) => {
+              const label = service.title[lang.code];
+              return `<a class="insight-card enquiry-card" href="${escapeHtml(enquiryMailto(service.title.en))}">
+                <span class="card-kicker">${escapeHtml(service.accent)}</span>
+                <h3>${escapeHtml(label)}</h3>
+                <p>${escapeHtml(lang.code === "zh-hk" ? "以此服務作為查詢主題" : "Start an enquiry around this service")}</p>
+              </a>`;
+            })
+            .join("")}
+        </div>
       </section>
       <aside class="contact-panel">
         <p class="card-kicker">${escapeHtml(labels.contactChannels)}</p>
-        <a href="mailto:info@imaginedivision.com">info@imaginedivision.com</a>
+        <h2>${escapeHtml(labels.startWithEmail || "Start With Email")}</h2>
+        <p>${escapeHtml(labels.responseGuidance || "For a faster reply, include the project type, target date, venue or platform, and any reference materials.")}</p>
+        <a href="${escapeHtml(enquiryMailto("General"))}">info@imaginedivision.com</a>
         <a href="https://www.facebook.com/ImagineDivision">Facebook / Imagine Division</a>
         <a href="https://twitter.com/ImagineDivision">Twitter / @ImagineDivision</a>
         <a href="https://www.instagram.com/imagine.division/">Instagram / @imagine.division</a>
@@ -1999,6 +2264,8 @@ function renderContact(lang) {
     description: meta.description,
     current: "contact",
     alternatePath: pagePath("contact", languages.find((item) => item.dir === lang.otherDir)),
+    canonicalPath: pagePath("contact", lang),
+    image: contactPage.image,
     body,
   });
 }
@@ -2443,28 +2710,28 @@ const siteJs = `(() => {
 
 const siteCss = `@font-face {
   font-family: "PP Neue Montreal";
-  src: url("fonts/PPNeueMontreal-Regular.otf") format("opentype");
+  src: url("assets/fonts/PPNeueMontreal-Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "PP Neue Montreal";
-  src: url("fonts/PPNeueMontreal-Bold.otf") format("opentype");
+  src: url("assets/fonts/PPNeueMontreal-Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Noto Sans TC";
-  src: url("fonts/NotoSansTC-Regular.otf") format("opentype");
+  src: url("assets/fonts/NotoSansTC-Regular.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Noto Sans TC";
-  src: url("fonts/NotoSansTC-Bold.otf") format("opentype");
+  src: url("assets/fonts/NotoSansTC-Bold.otf") format("opentype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -2587,7 +2854,13 @@ li + li { margin-top: 0.45rem; }
   gap: 1rem;
 }
 .brand { display: inline-flex; align-items: center; min-width: 0; }
-.brand img { width: 188px; height: auto; }
+.brand img {
+  width: 220px;
+  max-height: 54px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(247, 244, 234, 0.08));
+}
 .primary-nav {
   margin-left: auto;
   display: flex;
@@ -2672,6 +2945,8 @@ li + li { margin-top: 0.45rem; }
   overflow: hidden;
   border-bottom: 1px solid var(--line);
   isolation: isolate;
+  --hero-drift-x: 0px;
+  --hero-drift-y: 0px;
 }
 .hero::before,
 .hero::after {
@@ -2683,15 +2958,17 @@ li + li { margin-top: 0.45rem; }
 }
 .hero::before {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 84px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 120px);
-  opacity: 0.22;
-  transform: translate3d(0, var(--hero-shift, 0px), 0);
+    linear-gradient(120deg, rgba(107, 223, 248, 0.14), transparent 28%, rgba(255, 107, 95, 0.12) 78%, transparent),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.052) 0 1px, transparent 1px 84px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 120px);
+  opacity: 0.3;
+  transform: translate3d(var(--hero-drift-x, 0px), var(--hero-shift, 0px), 0);
+  animation: hero-grid-breathe 12s ease-in-out infinite;
 }
 .hero::after {
-  inset: 18% 0 auto;
+  inset: 16% 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(107, 223, 248, 0.84), rgba(240, 196, 106, 0.72), transparent);
+  background: linear-gradient(90deg, transparent, rgba(107, 223, 248, 0.88), rgba(240, 196, 106, 0.78), rgba(255, 107, 95, 0.62), transparent);
   opacity: 0.72;
   animation: hero-scan 4.8s var(--motion-spring) infinite;
 }
@@ -2701,16 +2978,19 @@ li + li { margin-top: 0.45rem; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(0.92) contrast(1.08);
-  transform: translate3d(0, var(--hero-shift, 0px), 0) scale(1.045);
+  filter: saturate(0.98) contrast(1.1);
+  transform: translate3d(var(--hero-drift-x, 0px), calc(var(--hero-shift, 0px) + var(--hero-drift-y, 0px)), 0) scale(1.055);
   transform-origin: center;
+  animation: hero-media-drift 18s ease-in-out infinite alternate;
 }
 .hero-scrim {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(8,10,13,0.94), rgba(8,10,13,0.58) 48%, rgba(8,10,13,0.22)),
-    linear-gradient(0deg, rgba(8,10,13,0.92), rgba(8,10,13,0.18) 60%);
+    radial-gradient(circle at 78% 30%, rgba(107, 223, 248, 0.16), transparent 26%),
+    radial-gradient(circle at 68% 70%, rgba(240, 196, 106, 0.14), transparent 24%),
+    linear-gradient(90deg, rgba(8,10,13,0.96), rgba(8,10,13,0.64) 48%, rgba(8,10,13,0.34)),
+    linear-gradient(0deg, rgba(8,10,13,0.93), rgba(8,10,13,0.2) 60%);
   z-index: 1;
 }
 .hero-kinetic {
@@ -2725,7 +3005,7 @@ li + li { margin-top: 0.45rem; }
   right: max(2rem, calc((100vw - var(--max)) / 2));
   width: min(42vw, 520px);
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(247, 244, 234, 0.78), transparent);
+  background: linear-gradient(90deg, transparent, rgba(247, 244, 234, 0.78), rgba(107, 223, 248, 0.5), transparent);
   opacity: 0.34;
   transform: rotate(-14deg);
   animation: kinetic-line 7s ease-in-out infinite;
@@ -2733,13 +3013,85 @@ li + li { margin-top: 0.45rem; }
 .hero-kinetic span:nth-child(1) { top: 31%; animation-delay: -1s; }
 .hero-kinetic span:nth-child(2) { top: 48%; width: min(36vw, 460px); animation-delay: -3s; }
 .hero-kinetic span:nth-child(3) { top: 66%; width: min(28vw, 360px); animation-delay: -5s; }
+.hero-signal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.hero-signal span {
+  position: absolute;
+  bottom: -28%;
+  width: 1px;
+  height: 42%;
+  background: linear-gradient(0deg, transparent, rgba(107, 223, 248, 0.7), rgba(247, 244, 234, 0.44), transparent);
+  opacity: 0;
+  transform: translate3d(0, 20%, 0);
+  animation: signal-rise 7.2s ease-in-out infinite;
+}
+.hero-signal span:nth-child(1) { left: 52%; animation-delay: -0.8s; }
+.hero-signal span:nth-child(2) { left: 61%; height: 34%; animation-delay: -3.6s; }
+.hero-signal span:nth-child(3) { left: 73%; height: 48%; animation-delay: -5.8s; }
+.hero-signal span:nth-child(4) { left: 84%; height: 30%; animation-delay: -2.4s; }
+.hero-signal span:nth-child(5) { left: 92%; height: 52%; animation-delay: -6.8s; }
+.hero-orbit {
+  position: absolute;
+  right: max(1.5rem, calc((100vw - var(--max)) / 2));
+  bottom: 12%;
+  z-index: 1;
+  width: clamp(240px, 34vw, 520px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(247, 244, 234, 0.16);
+  border-radius: 50%;
+  opacity: 0.78;
+  pointer-events: none;
+  transform: translate3d(var(--hero-drift-x, 0px), var(--hero-drift-y, 0px), 0);
+  animation: orbit-rotate 28s linear infinite;
+}
+.hero-orbit::before,
+.hero-orbit::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(107, 223, 248, 0.18);
+  border-radius: 50%;
+}
+.hero-orbit::before {
+  inset: 16%;
+  border-color: rgba(240, 196, 106, 0.22);
+}
+.hero-orbit::after {
+  inset: 32%;
+  border-color: rgba(255, 107, 95, 0.2);
+}
+.hero-orbit span {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 8px rgba(107, 223, 248, 0.08), 0 0 28px rgba(107, 223, 248, 0.65);
+  animation: node-pulse 2.8s ease-in-out infinite;
+}
+.hero-orbit span:nth-child(1) { left: 50%; top: -4px; }
+.hero-orbit span:nth-child(2) { right: 10%; top: 24%; background: var(--amber); box-shadow: 0 0 0 8px rgba(240, 196, 106, 0.08), 0 0 28px rgba(240, 196, 106, 0.58); animation-delay: -0.7s; }
+.hero-orbit span:nth-child(3) { left: 18%; bottom: 10%; background: var(--red); box-shadow: 0 0 0 8px rgba(255, 107, 95, 0.08), 0 0 28px rgba(255, 107, 95, 0.52); animation-delay: -1.4s; }
+.hero-orbit span:nth-child(4) { right: 22%; bottom: 6%; background: var(--violet); box-shadow: 0 0 0 8px rgba(180, 140, 255, 0.08), 0 0 28px rgba(180, 140, 255, 0.5); animation-delay: -2.1s; }
 .hero-content {
   position: relative;
   z-index: 2;
-  width: min(100% - 32px, var(--max));
+  width: min(calc(100% - 32px), var(--max));
+  min-width: 0;
   margin: 0 auto;
   padding: 9rem 0 5rem;
   animation: hero-enter 700ms var(--motion-spring) both;
+}
+.hero-logo {
+  width: clamp(300px, 45vw, 680px);
+  height: auto;
+  margin: 0 0 1.4rem;
+  filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.48)) drop-shadow(0 0 24px rgba(107, 223, 248, 0.12));
 }
 .hero-content p {
   max-width: 780px;
@@ -2817,6 +3169,44 @@ li + li { margin-top: 0.45rem; }
 .hero-meta div:last-child { border-right: 0; }
 .hero-meta dt { color: var(--subtle); font-size: 0.78rem; text-transform: uppercase; font-weight: 700; }
 .hero-meta dd { margin: 0.2rem 0 0; color: var(--ink); font-weight: 700; }
+.proof-strip {
+  background: #07080a;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.proof-strip-inner {
+  width: min(100% - 32px, var(--max));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.proof-strip article {
+  min-height: 132px;
+  padding: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    var(--panel);
+}
+.proof-strip strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.proof-strip span {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+.proof-strip p {
+  margin: 0.55rem 0 0;
+  font-size: 0.92rem;
+}
 .home-spa-nav {
   position: sticky;
   top: 76px;
@@ -3203,6 +3593,46 @@ li + li { margin-top: 0.45rem; }
   color: var(--ink);
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.04);
+}
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+.insight-card {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    var(--panel);
+}
+.insight-card h3 {
+  font-size: 1.15rem;
+}
+.insight-card ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+.insight-card p {
+  margin: 0;
+}
+.enquiry-card {
+  color: inherit;
+  transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+.enquiry-card:hover {
+  border-color: rgba(107, 223, 248, 0.48);
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateY(-2px);
+}
+.contact-enquiry-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .service-detail,
 .project-detail,
@@ -3711,6 +4141,22 @@ li + li { margin-top: 0.45rem; }
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes hero-media-drift {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.035;
+  }
+}
+@keyframes hero-grid-breathe {
+  0%, 100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.34;
+  }
+}
 @keyframes hero-scan {
   0%, 100% {
     transform: translate3d(-12%, 0, 0) scaleX(0.42);
@@ -3731,6 +4177,33 @@ li + li { margin-top: 0.45rem; }
   50% {
     transform: translate3d(-4%, 0, 0) rotate(-14deg);
     opacity: 0.46;
+  }
+}
+@keyframes signal-rise {
+  0%, 100% {
+    opacity: 0;
+    transform: translate3d(0, 22%, 0) scaleY(0.6);
+  }
+  28%, 68% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(0, -88%, 0) scaleY(1);
+  }
+}
+@keyframes orbit-rotate {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.52;
+    scale: 0.84;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.18;
   }
 }
 
@@ -3774,7 +4247,15 @@ li + li { margin-top: 0.45rem; }
   .links-profile h1 {
     max-width: none;
   }
+  .hero-orbit {
+    right: -10%;
+    bottom: 18%;
+    opacity: 0.48;
+  }
   .process-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .proof-strip-inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .service-showcase-card,
@@ -3797,9 +4278,30 @@ li + li { margin-top: 0.45rem; }
 
 @media (max-width: 640px) {
   .header-inner { width: min(100% - 24px, 1340px); }
-  .brand img { width: 154px; }
+  .brand img { width: 172px; }
   .hero { min-height: 82svh; }
-  .hero-content { width: min(100% - 24px, var(--max)); padding: 7rem 0 3rem; }
+  .hero-content {
+    width: calc(100% - 24px);
+    max-width: var(--max);
+    padding: 7rem 0 3rem;
+  }
+  .hero-logo {
+    width: min(82vw, 360px);
+    margin-bottom: 1.1rem;
+  }
+  .hero-kinetic span { right: -12%; }
+  .hero-signal { opacity: 0.48; }
+  .hero-signal span:nth-child(1) { left: 48%; }
+  .hero-signal span:nth-child(2) { left: 60%; }
+  .hero-signal span:nth-child(3) { left: 74%; }
+  .hero-signal span:nth-child(4) { left: 88%; }
+  .hero-signal span:nth-child(5) { display: none; }
+  .hero-orbit {
+    width: clamp(190px, 74vw, 310px);
+    right: -28%;
+    bottom: 22%;
+    opacity: 0.34;
+  }
   .links-page.hero { min-height: calc(100svh - 76px); }
   .links-shell {
     width: min(100% - 24px, 980px);
@@ -3829,6 +4331,8 @@ li + li { margin-top: 0.45rem; }
   .hero-meta,
   .focus-list,
   .feature-list,
+  .insight-grid,
+  .proof-strip-inner,
   .process-rail,
   .service-showcase-grid,
   .gs-spec,
@@ -3843,7 +4347,13 @@ li + li { margin-top: 0.45rem; }
   .hero-meta div { border-right: 0; border-bottom: 1px solid var(--line); }
   .hero-meta div:last-child { border-bottom: 0; }
   .container { width: min(100% - 24px, var(--max)); }
-  h1 { font-size: 3.2rem; }
+  h1 { font-size: 3.05rem; }
+  .hero-content h1 {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    text-wrap: wrap;
+  }
   h2 { font-size: 2.55rem; }
   h3 { font-size: 1.35rem; }
   .service-showcase-copy h3,
@@ -3866,6 +4376,7 @@ li + li { margin-top: 0.45rem; }
   }
   .hero-media,
   .hero::before,
+  .hero-orbit,
   .service-showcase-card:hover,
   .service-card:hover,
   .project-card:hover,
@@ -3873,6 +4384,15 @@ li + li { margin-top: 0.45rem; }
   .capability-card:hover,
   .contact-cta-card:hover {
     transform: none !important;
+  }
+  .hero-media {
+    scale: 1 !important;
+  }
+  .hero-signal {
+    display: none !important;
+  }
+  .hero-orbit {
+    rotate: 0deg !important;
   }
 }`;
 
