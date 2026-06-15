@@ -1,0 +1,33 @@
+{
+  "languages": [
+    "en",
+    "zh-hk"
+  ],
+  "standalonePages": [
+    "links"
+  ],
+  "services": [
+    "event-production",
+    "virtual-production",
+    "web3-ai-engineering",
+    "virtual-artist-management-and-production",
+    "cgi-vfx"
+  ],
+  "projects": [
+    "third-belt-road-youth-development-summit",
+    "top-nova-2023",
+    "hololive-party2gather",
+    "lnaf-2023",
+    "vtuber-only-hk-2024",
+    "virtualcarnival-2025",
+    "mic-on-project-1st-live",
+    "parallel-phantasia",
+    "ghost-hoshimachi-suisei-cosplay-music-video",
+    "angela-pang-official-music-video",
+    "ywca-virtual-production-course",
+    "100most-ai-portraits",
+    "c-smart-site-management-platform",
+    "mtr-loha-heart-ai-promo"
+  ],
+  "pagesPerLanguage": 24
+}

@@ -1,0 +1,20 @@
+# Local server logs
+server-*.err
+server-*.out
+server-*.log
+
+# Local verification output
+verification/
+
+# Source/archive material not needed for the public Pages deploy
+portfolio-source/
+source-archive/
+
+# Generated Python bytecode
+__pycache__/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
