@@ -14,10 +14,7 @@
     ],
     "source": "https://partnernet.hktb.com/filemanager/intranet/pm/PressRelease/EnglishPress/Press%20Release%202019/07-EMFHK%20Press%20Release%20-%2026%20July%20-%20E.pdf",
     "photoSource": "https://hktb.filecamp.com/s/PZPeA1YcyEjn2qs3/fo/IeC6XrxuEPs8KRdA",
-    "notes": {
-      "en": "Edition matched from the recalled PUBG Mobile and CS:GO tournament lineup; team experience before Imagine Division was established.",
-      "zh": "按 PUBG Mobile 及 CS:GO 賽事組合判斷年份；屬 Imagine Division 成立前的團隊經驗。"
-    }
+    "image": "/assets/events/emfhk-2019.jpg"
   },
   {
     "id": "innohk-2022",
@@ -32,7 +29,8 @@
       "Streaming"
     ],
     "source": "https://www.innohk.gov.hk/en/spotlights/news/news25may/",
-    "suppliedDate": "24–25 May 2022"
+    "suppliedDate": "24–25 May 2022",
+    "image": "/assets/events/innohk-2022.jpg"
   },
   {
     "id": "cmh-groundbreaking-2022",
@@ -47,7 +45,8 @@
       "Streaming"
     ],
     "source": "https://www.info.gov.hk/gia/general/202206/02/P2022060200346.htm",
-    "suppliedDate": "1–2 Jun 2022"
+    "suppliedDate": "1–2 Jun 2022",
+    "image": "/assets/events/cmh-groundbreaking-2022.jpg"
   },
   {
     "id": "fhka-2022",
@@ -61,7 +60,8 @@
       "Streaming engineering"
     ],
     "source": "https://fhka.com.hk/「慶祝香港回歸祖國25週年-暨-香港友好協進會成立33/",
-    "suppliedDate": "21 Jun 2022"
+    "suppliedDate": "21 Jun 2022",
+    "image": "/assets/events/fhka-2022.jpg"
   },
   {
     "id": "breastfeeding-2022",
@@ -76,7 +76,8 @@
       "Streaming"
     ],
     "source": "https://unicef.org.hk/zh-hant/news/latest_news/online-celebration-world-breastfeeding-week-2022",
-    "suppliedDate": "28–29 Jul 2022"
+    "suppliedDate": "28–29 Jul 2022",
+    "image": "/assets/events/breastfeeding-2022.jpg"
   },
   {
     "id": "hkcmms-2022",
@@ -91,7 +92,8 @@
       "Streaming"
     ],
     "source": "https://www.info.gov.hk/gia/general/202208/17/P2022081600556.htm",
-    "suppliedDate": "15–16 Aug 2022"
+    "suppliedDate": "15–16 Aug 2022",
+    "image": "/assets/events/hkcmms-2022.jpg"
   },
   {
     "id": "revive-2022",
@@ -108,7 +110,8 @@
     ],
     "source": "https://space.hk01.com/organizer/891/revive-tech-asia-limited",
     "photoSource": "https://www.hkcolo.com/events.html",
-    "suppliedDate": "22–25 Aug 2022"
+    "suppliedDate": "22–25 Aug 2022",
+    "image": "/assets/events/revive-2022.jpg"
   },
   {
     "id": "gba-tcm-2022",
@@ -123,7 +126,8 @@
       "Streaming"
     ],
     "source": "https://www.info.gov.hk/gia/general/202208/25/P2022082500605.htm",
-    "suppliedDate": "24–25 Aug 2022"
+    "suppliedDate": "24–25 Aug 2022",
+    "image": "/assets/events/gba-tcm-2022.jpg"
   },
   {
     "id": "luminous-lodge-01",
@@ -142,10 +146,7 @@
     "source": "https://hkdoujin.com/2022/08/11482/",
     "photoSource": "https://www.klook.com/zh-HK/event-detail/101003150-2022-luminous-lodge-exhibition/",
     "suppliedDate": "27–28 Aug 2022",
-    "notes": {
-      "en": "Postponed from 12–13 February; the original Klook poster retains the earlier dates.",
-      "zh": "由2月12–13日延期；原 Klook 海報仍顯示舊日期。"
-    }
+    "image": "/assets/events/luminous-lodge-01.jpg"
   },
   {
     "id": "foresight-2023",
@@ -161,7 +162,8 @@
     ],
     "source": "https://www.info.gov.hk/gia/general/202212/02/P2022120100406.htm",
     "photoSource": "https://www.hkpc.org/sites/default/files/2024-05/hkpc_esg_report_2022_23.pdf",
-    "suppliedDate": "1 Dec 2022"
+    "suppliedDate": "1 Dec 2022",
+    "image": "/assets/events/foresight-2023.jpg"
   },
   {
     "id": "top-nova-2023",
@@ -210,7 +212,8 @@
       "Event organizing",
       "Audio / visual engineering"
     ],
-    "source": "https://www.hkgx.hk/TC/Article/22/348/Top%20Nova%E9%9F%B3%E6%A8%82%E7%AF%80"
+    "source": "https://www.hkgx.hk/TC/Article/22/348/Top%20Nova%E9%9F%B3%E6%A8%82%E7%AF%80",
+    "image": "/assets/events/top-nova-2024.jpg"
   },
   {
     "id": "belt-road-summit-3",
@@ -290,7 +293,8 @@
       "Audio / visual engineering",
       "Streaming"
     ],
-    "source": "https://www.hkcd.com.hk/hkcdweb/content/2025/09/05/content_8712438.html"
+    "source": "https://www.hkcd.com.hk/hkcdweb/content/2025/09/05/content_8712438.html",
+    "image": "/assets/events/100-belt-road-stories.jpg"
   },
   {
     "id": "belt-road-summit-4",
@@ -304,7 +308,8 @@
       "Event organizing",
       "Audio / visual engineering"
     ],
-    "source": "https://www.brgcc.hk/post.php?c=brgcc&p=1664"
+    "source": "https://www.brgcc.hk/post.php?c=brgcc&p=1664",
+    "image": "/assets/events/belt-road-summit-4.jpg"
   },
   {
     "id": "hkgcc-165",
@@ -318,6 +323,7 @@
       "Specialty display",
       "Visual engineering"
     ],
-    "source": "https://www.chamber.org.hk/165ball/"
+    "source": "https://www.chamber.org.hk/165ball/",
+    "image": "/assets/events/hkgcc-165.jpg"
   }
 ]

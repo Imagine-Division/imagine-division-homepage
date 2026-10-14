@@ -2095,36 +2095,31 @@ function renderEventHistory(lang) {
     "Remote production": "遠端製作",
     "Specialty display": "特殊顯示系統",
   };
-  const formatter = new Intl.DateTimeFormat(isZh ? "zh-HK" : "en-GB", {
-    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
-  });
-  const external = ' target="_blank" rel="noopener noreferrer"';
   const rows = [...eventHistory].sort((a, b) => b.date.localeCompare(a.date)).map((event) => {
-    const date = formatter.format(new Date(event.date));
-    const endDate = event.endDate ? formatter.format(new Date(event.endDate)) : "";
-    const caseUrl = event.project ? pagePath("projects", lang) + event.project + "/" : "";
-    const caseLink = caseUrl ? `<a class="text-link" href="${caseUrl}">${isZh ? "查看案例" : "View case"}</a>` : "";
-    const note = event.notes ? `<small class="event-note">${escapeHtml(event.notes[isZh ? "zh" : "en"])}</small>` : "";
-    const imageUrl = caseUrl || event.photoSource || event.source;
+    const start = new Date(event.date);
+    const end = event.endDate ? new Date(event.endDate) : null;
+    let date = start.getUTCFullYear() + "年" + (start.getUTCMonth() + 1) + "月" + start.getUTCDate();
+    if (end) {
+      const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+      const sameMonth = sameYear && start.getUTCMonth() === end.getUTCMonth();
+      date += (sameMonth ? "-" : "日-") + (sameYear ? "" : end.getUTCFullYear() + "年")
+        + (sameMonth ? "" : (end.getUTCMonth() + 1) + "月") + end.getUTCDate();
+    }
+    date += "日";
     return `<tr role="row" data-event-id="${escapeHtml(event.id)}" data-event-date="${event.date}">
-      <td role="cell" data-label="${headings[0]}"><time datetime="${event.date}">${date}</time>${endDate ? ` – <time datetime="${event.endDate}">${endDate}</time>` : ""}</td>
+      <td role="cell" data-label="${headings[0]}"><time datetime="${event.date}">${date}</time></td>
       <td role="cell" data-label="${headings[1]}">${escapeHtml(event.org[isZh ? "zh" : "en"])}</td>
-      <td role="cell" data-label="${headings[2]}"><a href="${escapeHtml(event.source)}"${external}>${escapeHtml(event.name)}</a>${note}${caseLink}</td>
+      <td role="cell" data-label="${headings[2]}">${escapeHtml(event.name)}</td>
       <td role="cell" data-label="${headings[3]}">${escapeHtml(event.roles.map((role) => isZh ? roleLabels[role] : role).join(" / "))}</td>
-      <td role="cell" data-label="${headings[4]}"><a href="${escapeHtml(imageUrl)}"${caseUrl ? "" : external} aria-label="${escapeHtml((isZh ? "活動影像：" : "Event imagery: ") + event.name)}">${event.image ? `<img class="event-photo" src="${escapeHtml(event.image)}" alt="${escapeHtml(event.name)}" width="120" height="80" loading="lazy" decoding="async">` : (isZh ? "查看影像來源" : "View imagery source")}</a></td>
+      <td role="cell" data-label="${headings[4]}"><img class="event-photo" src="${escapeHtml(event.image)}" alt="${escapeHtml(event.name)}" width="120" height="80" loading="lazy" decoding="async"></td>
     </tr>`;
   }).join("");
-  const caption = isZh
-    ? "精選團隊活動經驗，按日期由新至舊排列。日期為公開活動日期；機構欄列出主辦及合作單位。"
-    : "A selection of the team's event experience, newest first. Dates refer to public events. Organizations identify event organizers and collaborators.";
   return `<section class="band" id="event-history">
     <div class="container">
       ${sectionIntro(isZh ? "精選製作經驗" : "Selected Production Experience", title)}
       <p>${isZh ? "從舞台及賽事轉播，到企業論壇、文化活動與虛擬藝人演出。" : "From stage and tournament broadcasts to corporate forums, cultural events, and virtual artist performances."}</p>
-      <p class="event-history-caption">${caption}</p>
       <div class="table-wrap" role="region" aria-label="${title}" tabindex="0">
         <table class="project-table event-history-table" role="table">
-          <caption class="sr-only">${caption}</caption>
           <thead role="rowgroup"><tr role="row">${headings.map((heading) => `<th scope="col" role="columnheader">${heading}</th>`).join("")}</tr></thead>
           <tbody role="rowgroup">${rows}</tbody>
         </table>
@@ -3785,12 +3780,10 @@ li + li { margin-top: 0.45rem; }
   border-radius: var(--radius);
 }
 .project-table.event-history-table { min-width: 1000px; }
-.event-history-caption { max-width: 80ch; }
 .event-history-table td:first-child { min-width: 145px; }
 .event-history-table td:nth-child(2) { width: 24%; }
 .event-history-table td:nth-child(3) { width: 30%; }
 .event-photo { width: 120px; height: 80px; max-width: none; object-fit: cover; border-radius: 8px; }
-.event-note { display: block; margin: 0.6rem 0; color: var(--muted); }
 #event-history { scroll-margin-top: 100px; }
 @media (max-width: 760px) {
   .project-table.event-history-table { min-width: 0; }

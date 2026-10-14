@@ -46,27 +46,27 @@ HKGCC, rather than HKGC, and the 2024 dinner edition were confirmed by the proje
 
 ## Image references
 
-Six existing Imagine Division portfolio/archive images are embedded. Other event imagery is linked at its original source; reproduction rights have not been established for those external images.
+All 20 events now use locally stored images. Website annotations and external source links have been removed. Reference material below is retained only as a research record.
 
-| Event | Image / imagery source | Use |
-| --- | --- | --- |
-| e-Sports & Music Festival Hong Kong 2019 | [Source](https://hktb.filecamp.com/s/PZPeA1YcyEjn2qs3/fo/IeC6XrxuEPs8KRdA) | External imagery reference; not copied |
-| InnoHK 創新香港研發平台啟動禮 | [Source](https://www.innohk.gov.hk/en/spotlights/news/news25may/) | External imagery reference; not copied |
-| 中醫醫院及政府中藥檢測中心動土典禮 | [Source](https://www.info.gov.hk/gia/general/202206/02/P2022060200346.htm) | External imagery reference; not copied |
-| 慶祝香港回歸祖國25週年暨香港友好協進會成立33週年音樂晚會 | [Source](https://fhka.com.hk/「慶祝香港回歸祖國25週年-暨-香港友好協進會成立33/) | External imagery reference; not copied |
-| 國際母乳哺育周2022線上慶祝活動 | [Source](https://unicef.org.hk/zh-hant/news/latest_news/online-celebration-world-breastfeeding-week-2022) | External imagery reference; not copied |
-| 香港中藥材標準國際專家委員會第12次會議 | [Source](https://www.info.gov.hk/gia/general/202208/17/P2022081600556.htm) | External imagery reference; not copied |
-| Revive Tech Asia 2022 亞洲商業科技展 | [Source](https://www.hkcolo.com/events.html) | External imagery reference; not copied |
-| 第四屆粵港澳大灣區中醫藥傳承創新發展大會 | [Source](https://www.info.gov.hk/gia/general/202208/25/P2022082500605.htm) | External imagery reference; not copied |
-| Luminous Lodge 01 綜合同人展 | [Source](https://www.klook.com/zh-HK/event-detail/101003150-2022-luminous-lodge-exhibition/) | External imagery reference; not copied |
-| HKPC ForeSight 2023 — 智瞻2023：經濟開新篇・科技創優勢 | [Source](https://www.hkpc.org/sites/default/files/2024-05/hkpc_esg_report_2022_23.pdf) | External imagery reference; not copied |
-| Top Nova Music Festival 2023｜Top Nova 音樂節 | [Source](https://www.topnova.com.hk/) | Existing Imagine Division photo: /portfolio-assets/top-nova-2023-page-008_top-nova-2023_image-01.png |
-| Mic On Project 1st Live Concert | [Source](https://hkvtuber.fandom.com/zh-tw/wiki/小林冰) | Existing Imagine Division photo: /portfolio-assets/mic-on-project-1st-live-page-013_mic-on-project-1st-live_image-01.png |
-| Top Nova Music Festival 2024｜Top Nova 音樂節 | [Source](https://www.hkgx.hk/TC/Article/22/348/Top%20Nova%E9%9F%B3%E6%A8%82%E7%AF%80) | External imagery reference; not copied |
-| 第三屆「一帶一路」青年發展高峰論壇 | [Source](https://hk.ocmfa.gov.cn/zydt/202412/t20241219_11504033.htm) | Existing Imagine Division photo: /portfolio-assets/third-belt-road-youth-development-summit-page-007_third-belt-road-youth-development-summit_image-01.jpeg |
-| 「『帶路』文化聚香江」文化晚宴 | [Source](https://www.wenweipo.com/s/202412/04/AP6750445de4b073da47a64215.html) | Existing Imagine Division photo: /assets/belt-road-dinner-2024.jpg |
-| hololive English Party2Gether | [Source](https://www.eventbrite.hk/e/hololive-party2gether-tickets-1100758541429) | Existing Imagine Division photo: /portfolio-assets/hololive-party2gather-page-009_hololive-party2gather_image-01.jpeg |
-| Virtual Carnival 2025 | [Source](https://www.klook.com/zh-HK/event-detail/101029173-2025-virtual-carnival/) | Existing Imagine Division photo: /portfolio-assets/virtualcarnival-2025-page-012_virtualcarnival-2025_image-01.jpeg |
-| 「100個香港一帶一路故事網上巡禮」啟動儀式 | [Source](https://www.hkcd.com.hk/hkcdweb/content/2025/09/05/content_8712438.html) | External imagery reference; not copied |
-| 第四屆「一帶一路」青年發展高峰論壇 | [Source](https://www.brgcc.hk/post.php?c=brgcc&p=1664) | External imagery reference; not copied |
-| HKGCC 165th Anniversary Ball｜香港總商會165周年晚宴 | [Source](https://www.chamber.org.hk/165ball/) | External imagery reference; not copied |
+| Event | Local image |
+| --- | --- |
+| e-Sports & Music Festival Hong Kong 2019 | /assets/events/emfhk-2019.jpg |
+| InnoHK 創新香港研發平台啟動禮 | /assets/events/innohk-2022.jpg |
+| 中醫醫院及政府中藥檢測中心動土典禮 | /assets/events/cmh-groundbreaking-2022.jpg |
+| 慶祝香港回歸祖國25週年暨香港友好協進會成立33週年音樂晚會 | /assets/events/fhka-2022.jpg |
+| 國際母乳哺育周2022線上慶祝活動 | /assets/events/breastfeeding-2022.jpg |
+| 香港中藥材標準國際專家委員會第12次會議 | /assets/events/hkcmms-2022.jpg |
+| Revive Tech Asia 2022 亞洲商業科技展 | /assets/events/revive-2022.jpg |
+| 第四屆粵港澳大灣區中醫藥傳承創新發展大會 | /assets/events/gba-tcm-2022.jpg |
+| Luminous Lodge 01 綜合同人展 | /assets/events/luminous-lodge-01.jpg |
+| HKPC ForeSight 2023 — 智瞻2023：經濟開新篇・科技創優勢 | /assets/events/foresight-2023.jpg |
+| Top Nova Music Festival 2023｜Top Nova 音樂節 | /portfolio-assets/top-nova-2023-page-008_top-nova-2023_image-01.png |
+| Mic On Project 1st Live Concert | /portfolio-assets/mic-on-project-1st-live-page-013_mic-on-project-1st-live_image-01.png |
+| Top Nova Music Festival 2024｜Top Nova 音樂節 | /assets/events/top-nova-2024.jpg |
+| 第三屆「一帶一路」青年發展高峰論壇 | /portfolio-assets/third-belt-road-youth-development-summit-page-007_third-belt-road-youth-development-summit_image-01.jpeg |
+| 「『帶路』文化聚香江」文化晚宴 | /assets/belt-road-dinner-2024.jpg |
+| hololive English Party2Gether | /portfolio-assets/hololive-party2gather-page-009_hololive-party2gather_image-01.jpeg |
+| Virtual Carnival 2025 | /portfolio-assets/virtualcarnival-2025-page-012_virtualcarnival-2025_image-01.jpeg |
+| 「100個香港一帶一路故事網上巡禮」啟動儀式 | /assets/events/100-belt-road-stories.jpg |
+| 第四屆「一帶一路」青年發展高峰論壇 | /assets/events/belt-road-summit-4.jpg |
+| HKGCC 165th Anniversary Ball｜香港總商會165周年晚宴 | /assets/events/hkgcc-165.jpg |

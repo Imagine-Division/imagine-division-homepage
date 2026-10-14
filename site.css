@@ -1040,12 +1040,10 @@ li + li { margin-top: 0.45rem; }
   border-radius: var(--radius);
 }
 .project-table.event-history-table { min-width: 1000px; }
-.event-history-caption { max-width: 80ch; }
 .event-history-table td:first-child { min-width: 145px; }
 .event-history-table td:nth-child(2) { width: 24%; }
 .event-history-table td:nth-child(3) { width: 30%; }
 .event-photo { width: 120px; height: 80px; max-width: none; object-fit: cover; border-radius: 8px; }
-.event-note { display: block; margin: 0.6rem 0; color: var(--muted); }
 #event-history { scroll-margin-top: 100px; }
 @media (max-width: 760px) {
   .project-table.event-history-table { min-width: 0; }
