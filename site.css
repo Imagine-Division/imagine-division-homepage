@@ -1039,6 +1039,22 @@ li + li { margin-top: 0.45rem; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+.project-table.event-history-table { min-width: 1000px; }
+.event-history-caption { max-width: 80ch; }
+.event-history-table td:first-child { min-width: 145px; }
+.event-history-table td:nth-child(2) { width: 24%; }
+.event-history-table td:nth-child(3) { width: 30%; }
+.event-photo { width: 120px; height: 80px; max-width: none; object-fit: cover; border-radius: 8px; }
+.event-note { display: block; margin: 0.6rem 0; color: var(--muted); }
+#event-history { scroll-margin-top: 100px; }
+@media (max-width: 760px) {
+  .project-table.event-history-table { min-width: 0; }
+  .event-history-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .event-history-table tbody, .event-history-table tr, .event-history-table td { display: block; }
+  .event-history-table tr { padding: 1rem; border-bottom: 1px solid var(--line); }
+  .event-history-table td { width: auto !important; min-width: 0 !important; padding: 0.4rem 0; border: 0; overflow-wrap: anywhere; }
+  .event-history-table td::before { content: attr(data-label); display: block; color: var(--amber); font-size: 0.75rem; margin-bottom: 0.2rem; }
+}
 .project-table {
   width: 100%;
   min-width: 760px;

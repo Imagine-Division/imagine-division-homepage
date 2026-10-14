@@ -353,10 +353,10 @@ async function captureSection(client, siteUrl, viewport, selector, outputName) {
   await loaded;
   await new Promise((resolveWait) => setTimeout(resolveWait, 900));
   await client.send("Runtime.evaluate", {
-    expression: `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "center" })`,
+    expression: `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ behavior: "instant", block: "center" })`,
     returnByValue: true,
   });
-  await new Promise((resolveWait) => setTimeout(resolveWait, 300));
+  await new Promise((resolveWait) => setTimeout(resolveWait, 800));
   const screenshot = await client.send("Page.captureScreenshot", {
     format: "png",
     fromSurface: true,
@@ -394,6 +394,32 @@ async function main() {
     const desktopHome = await verifyViewport(client, `${baseUrl}/en/`, { width: 1440, height: 1100, mobile: false }, "desktop-home.png");
     const mobileHome = await verifyViewport(client, `${baseUrl}/zh-hk/`, { width: 390, height: 1000, mobile: true }, "mobile-home.png");
     const desktopProjects = await verifyViewport(client, `${baseUrl}/en/projects/`, { width: 1440, height: 1100, mobile: false }, "desktop-projects.png");
+    const mobileProjects = await verifyViewport(client, `${baseUrl}/zh-hk/projects/`, { width: 390, height: 1000, mobile: true }, "mobile-projects.png");
+    for (const [language, viewport, output] of [
+      ["en", { width: 1440, height: 1100, mobile: false }, "desktop-event-history.png"],
+      ["zh-hk", { width: 390, height: 1000, mobile: true }, "mobile-event-history.png"],
+    ]) {
+      await captureSection(client, baseUrl + "/" + language + "/projects/", viewport, "#event-history thead", output);
+      const result = await client.send("Runtime.evaluate", {
+        expression: `(() => {
+          const region = document.querySelector("#event-history .table-wrap");
+          const dates = [...region.querySelectorAll("[data-event-date]")].map(row => row.dataset.eventDate);
+          return {
+            count: dates.length,
+            sorted: dates.every((date, index) => !index || dates[index - 1] >= date),
+            documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+            scrollable: region.scrollWidth > region.clientWidth,
+            contained: region.getBoundingClientRect().right <= innerWidth,
+            focusable: region.tabIndex === 0,
+          };
+        })()`,
+        returnByValue: true,
+      });
+      const table = result.result.value;
+      if (table.count !== 20 || !table.sorted || table.documentOverflow || !table.contained || !table.focusable || (viewport.mobile && table.scrollable)) {
+        throw new Error("Event history layout failed: " + JSON.stringify(table));
+      }
+    }
     const desktopLinks = await verifyViewport(client, `${baseUrl}/links`, { width: 1440, height: 1100, mobile: false }, "desktop-links.png");
     const mobileLinks = await verifyViewport(client, `${baseUrl}/links`, { width: 390, height: 1000, mobile: true }, "mobile-links.png");
     const mobileService = await verifyViewport(client, `${baseUrl}/zh-hk/services/virtual-production/`, { width: 390, height: 1000, mobile: true }, "mobile-service.png");
@@ -404,7 +430,7 @@ async function main() {
     await captureSection(client, `${baseUrl}/zh-hk/projects/third-belt-road-youth-development-summit/`, { width: 390, height: 1000, mobile: true }, ".project-gallery", "mobile-project-gallery.png");
     client.close();
 
-    const checks = [desktopHome, mobileHome, desktopProjects, desktopLinks, mobileLinks, mobileService, mobileProject, directFileIndex];
+    const checks = [desktopHome, mobileHome, desktopProjects, mobileProjects, desktopLinks, mobileLinks, mobileService, mobileProject, directFileIndex];
     const failedViewport = checks.find(
       (check) =>
         check.horizontalOverflow ||
@@ -464,6 +490,7 @@ async function main() {
           desktopHome,
           mobileHome,
           desktopProjects,
+          mobileProjects,
           desktopLinks,
           mobileLinks,
           mobileService,
@@ -474,6 +501,9 @@ async function main() {
             "verification/desktop-home.png",
             "verification/mobile-home.png",
             "verification/desktop-projects.png",
+            "verification/mobile-projects.png",
+            "verification/desktop-event-history.png",
+            "verification/mobile-event-history.png",
             "verification/desktop-links.png",
             "verification/mobile-links.png",
             "verification/mobile-service.png",

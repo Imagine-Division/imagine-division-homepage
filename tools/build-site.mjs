@@ -10,6 +10,7 @@ const portfolioPagesRoot = join(portfolioRoot, "pages");
 const portfolioAssetsRoot = join(root, "portfolio-assets");
 const markdown = readFileSync(contentPath, "utf8");
 const siteOrigin = "https://www.imaginedivision.com";
+const eventHistory = JSON.parse(readFileSync(join(root, "refined-content", "event-history.json"), "utf8"));
 
 const languages = [
   {
@@ -306,7 +307,7 @@ const projectDefinitions = [
   {
     slug: "hololive-party2gather",
     pageSlug: "hololive-party2gather",
-    title: "Hololive Party2Gather",
+    title: "hololive English Party2Gether",
     category: "Event Production",
   },
   { slug: "lnaf-2023", pageSlug: "lnaf-2023", title: "LNAF 2023", category: "Event Production" },
@@ -319,13 +320,13 @@ const projectDefinitions = [
   {
     slug: "virtualcarnival-2025",
     pageSlug: "virtualcarnival-2025",
-    title: "VirtualCarnival 2025",
+    title: "Virtual Carnival 2025",
     category: "Event Production, Virtual Artist Management and Production",
   },
   {
     slug: "mic-on-project-1st-live",
     pageSlug: "mic-on-project-1st-live",
-    title: "《Mic On Project 1st Live》",
+    title: "Mic On Project 1st Live Concert",
     category: "Event Production, Virtual Artist Management and Production",
   },
   {
@@ -443,7 +444,7 @@ const portfolioPageDefinitions = [
     file: "page-009_hololive-party2gather.md",
     section: "Event Production",
     type: "project-reference",
-    title: "Hololive Party2Gather",
+    title: "hololive English Party2Gether",
   },
   {
     page: 10,
@@ -467,7 +468,7 @@ const portfolioPageDefinitions = [
     file: "page-012_virtualcarnival-2025.md",
     section: "Event Production",
     type: "project-reference",
-    title: "VirtualCarnival 2025",
+    title: "Virtual Carnival 2025",
   },
   {
     page: 13,
@@ -475,7 +476,7 @@ const portfolioPageDefinitions = [
     file: "page-013_mic-on-project-1st-live.md",
     section: "Event Production",
     type: "project-reference",
-    title: "《Mic On Project 1st Live》",
+    title: "Mic On Project 1st Live Concert",
   },
   {
     page: 14,
@@ -2076,6 +2077,62 @@ function gsViewerSection(lang) {
   </section>`;
 }
 
+
+function renderEventHistory(lang) {
+  const isZh = lang.code === "zh-hk";
+  const title = isZh ? "活動經驗" : "Event Experience";
+  const headings = isZh
+    ? ["活動日期", "機構／主辦單位", "活動", "團隊職責", "活動影像"]
+    : ["Event date", "Organization / organizer", "Event", "Team role", "Event imagery"];
+  const roleLabels = {
+    "Visual engineering": "視訊工程",
+    "Streaming": "直播",
+    "Audio / visual engineering": "影音工程",
+    "Event organizing": "活動策劃",
+    "Show direction": "演出統籌",
+    "Streaming engineering": "直播工程",
+    "Stage / tournament outside broadcast": "舞台／賽事轉播",
+    "Remote production": "遠端製作",
+    "Specialty display": "特殊顯示系統",
+  };
+  const formatter = new Intl.DateTimeFormat(isZh ? "zh-HK" : "en-GB", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+  });
+  const external = ' target="_blank" rel="noopener noreferrer"';
+  const rows = [...eventHistory].sort((a, b) => b.date.localeCompare(a.date)).map((event) => {
+    const date = formatter.format(new Date(event.date));
+    const endDate = event.endDate ? formatter.format(new Date(event.endDate)) : "";
+    const caseUrl = event.project ? pagePath("projects", lang) + event.project + "/" : "";
+    const caseLink = caseUrl ? `<a class="text-link" href="${caseUrl}">${isZh ? "查看案例" : "View case"}</a>` : "";
+    const note = event.notes ? `<small class="event-note">${escapeHtml(event.notes[isZh ? "zh" : "en"])}</small>` : "";
+    const imageUrl = caseUrl || event.photoSource || event.source;
+    return `<tr role="row" data-event-id="${escapeHtml(event.id)}" data-event-date="${event.date}">
+      <td role="cell" data-label="${headings[0]}"><time datetime="${event.date}">${date}</time>${endDate ? ` – <time datetime="${event.endDate}">${endDate}</time>` : ""}</td>
+      <td role="cell" data-label="${headings[1]}">${escapeHtml(event.org[isZh ? "zh" : "en"])}</td>
+      <td role="cell" data-label="${headings[2]}"><a href="${escapeHtml(event.source)}"${external}>${escapeHtml(event.name)}</a>${note}${caseLink}</td>
+      <td role="cell" data-label="${headings[3]}">${escapeHtml(event.roles.map((role) => isZh ? roleLabels[role] : role).join(" / "))}</td>
+      <td role="cell" data-label="${headings[4]}"><a href="${escapeHtml(imageUrl)}"${caseUrl ? "" : external} aria-label="${escapeHtml((isZh ? "活動影像：" : "Event imagery: ") + event.name)}">${event.image ? `<img class="event-photo" src="${escapeHtml(event.image)}" alt="${escapeHtml(event.name)}" width="120" height="80" loading="lazy" decoding="async">` : (isZh ? "查看影像來源" : "View imagery source")}</a></td>
+    </tr>`;
+  }).join("");
+  const caption = isZh
+    ? "精選團隊活動經驗，按日期由新至舊排列。日期為公開活動日期；機構欄列出主辦及合作單位。"
+    : "A selection of the team's event experience, newest first. Dates refer to public events. Organizations identify event organizers and collaborators.";
+  return `<section class="band" id="event-history">
+    <div class="container">
+      ${sectionIntro(isZh ? "精選製作經驗" : "Selected Production Experience", title)}
+      <p>${isZh ? "從舞台及賽事轉播，到企業論壇、文化活動與虛擬藝人演出。" : "From stage and tournament broadcasts to corporate forums, cultural events, and virtual artist performances."}</p>
+      <p class="event-history-caption">${caption}</p>
+      <div class="table-wrap" role="region" aria-label="${title}" tabindex="0">
+        <table class="project-table event-history-table" role="table">
+          <caption class="sr-only">${caption}</caption>
+          <thead role="rowgroup"><tr role="row">${headings.map((heading) => `<th scope="col" role="columnheader">${heading}</th>`).join("")}</tr></thead>
+          <tbody role="rowgroup">${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderProjects(lang) {
   const labels = i18n[lang.code];
   const meta = metaFor(data.projectsLanding, lang, labels.projects);
@@ -2091,7 +2148,7 @@ function renderProjects(lang) {
     copy: intro,
     image: imageSrc(heroProject.image),
     primary: { href: pagePath("contact", lang), label: labels.nextStep },
-    secondary: { href: pagePath("about", lang), label: labels.about },
+    secondary: { href: "#event-history", label: lang.code === "zh-hk" ? "活動經驗" : "Event Experience" },
   })}
   <section class="band band-light">
     <div class="container">
@@ -2110,29 +2167,7 @@ function renderProjects(lang) {
       ${projectCards(lang)}
     </div>
   </section>
-  <section class="band">
-    <div class="container">
-      ${sectionIntro(labels.projectIndex, labels.projectIndex)}
-      <div class="table-wrap">
-        <table class="project-table">
-          <thead><tr><th>${escapeHtml(labels.projects)}</th><th>${escapeHtml(labels.year)}</th><th>${escapeHtml(
-    labels.category
-  )}</th></tr></thead>
-          <tbody>
-            ${data.projects
-              .map(
-                (project) => `<tr>
-                  <td><a href="${projectPath(project, lang)}">${escapeHtml(project.title)}</a></td>
-                  <td>${escapeHtml(project.year)}</td>
-                  <td>${escapeHtml(project.category)}</td>
-                </tr>`
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>`;
+  ${renderEventHistory(lang)}`;
   return layout({
     lang,
     title: meta.title,
@@ -2149,7 +2184,7 @@ function renderProjectPage(project, lang) {
   const labels = i18n[lang.code];
   const title = `${project.title} | Imagine Division`;
   const description = project.summary[lang.code];
-  const metadata = Object.entries(project.metadata).filter(([key]) => key !== "Slug");
+  const metadata = Object.entries(project.metadata).filter(([key, value]) => key !== "Slug" && value !== "Not specified in archive");
   const creditImages = ["music-video-stellarstellar", "ghost-music-video", "angela-pang-mv"].includes(project.slug)
     ? `<div class="credit-images">
         <img src="/assets/credit-2.jpg" alt="Project credit graphic" loading="lazy" decoding="async" width="640" height="420">
@@ -3748,6 +3783,22 @@ li + li { margin-top: 0.45rem; }
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+.project-table.event-history-table { min-width: 1000px; }
+.event-history-caption { max-width: 80ch; }
+.event-history-table td:first-child { min-width: 145px; }
+.event-history-table td:nth-child(2) { width: 24%; }
+.event-history-table td:nth-child(3) { width: 30%; }
+.event-photo { width: 120px; height: 80px; max-width: none; object-fit: cover; border-radius: 8px; }
+.event-note { display: block; margin: 0.6rem 0; color: var(--muted); }
+#event-history { scroll-margin-top: 100px; }
+@media (max-width: 760px) {
+  .project-table.event-history-table { min-width: 0; }
+  .event-history-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .event-history-table tbody, .event-history-table tr, .event-history-table td { display: block; }
+  .event-history-table tr { padding: 1rem; border-bottom: 1px solid var(--line); }
+  .event-history-table td { width: auto !important; min-width: 0 !important; padding: 0.4rem 0; border: 0; overflow-wrap: anywhere; }
+  .event-history-table td::before { content: attr(data-label); display: block; color: var(--amber); font-size: 0.75rem; margin-bottom: 0.2rem; }
 }
 .project-table {
   width: 100%;
